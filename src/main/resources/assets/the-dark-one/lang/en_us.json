@@ -2,7 +2,8 @@
   "item.the-dark-one.dark_ones_dagger": "The Dark One's Dagger",
   "item.the-dark-one.dark_ones_dagger.tooltip": "There is only one. Whoever holds it can take the power.",
   "item.the-dark-one.dark_ones_dagger.tooltip2": "Near the Dark One: binds and weakens them.",
-  "item.the-dark-one.dark_ones_dagger.tooltip3": "The only blade that can end the Dark One.",
+  "item.the-dark-one.dark_ones_dagger.tooltip3": "Instakills. The only blade that can end the Dark One.",
+  "item.the-dark-one.dark_ones_dagger.tooltip4": "Hold it and use /darkone create <item> [count]",
   "key.the-dark-one.teleport": "Dark Teleport",
   "key.category.the-dark-one.dark_one": "The Dark One",
   "message.the-dark-one.became": "%s is now The Dark One",
@@ -10,5 +11,7 @@
   "message.the-dark-one.current": "The current Dark One is: %s",
   "message.the-dark-one.none": "There is currently no Dark One",
   "message.the-dark-one.transferred": "%s has taken the power of the Dark One!",
-  "message.the-dark-one.transferred_dramatic": "The darkness shifts... %s has claimed the power from %s. The dagger has chosen."
+  "message.the-dark-one.transferred_dramatic": "The darkness shifts... %s has claimed the power from %s. The dagger has chosen.",
+  "message.the-dark-one.create_denied": "You must be the Dark One or hold the dagger to create items.",
+  "message.the-dark-one.created": "Created %s x%d"
 }
