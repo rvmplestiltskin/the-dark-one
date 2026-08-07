@@ -1,6 +1,5 @@
 package com.rvmplestiltskin.darkone.network;
 
-import com.rvmplestiltskin.darkone.TheDarkOne;
 import com.rvmplestiltskin.darkone.state.DarkOneState;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -28,7 +27,7 @@ public class ModNetworking {
                 Vec3 look = player.getLookAngle();
                 Vec3 target = player.position().add(look.scale(8.0));
 
-                ServerLevel level = player.serverLevel();
+                ServerLevel level = (ServerLevel) player.level();
 
                 level.sendParticles(ParticleTypes.PORTAL,
                         player.getX(), player.getY() + 1, player.getZ(),

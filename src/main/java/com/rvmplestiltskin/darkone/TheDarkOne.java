@@ -14,11 +14,13 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.UUID;
 
 public class TheDarkOne implements ModInitializer {
@@ -42,10 +44,11 @@ public class TheDarkOne implements ModInitializer {
             ServerPlayer player = server.getPlayerList().getPlayer(darkOneId);
             if (player == null || !player.isAlive()) return;
 
-            player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 40, 1, true, false, false));
-            player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 40, 1, true, false, false));
+            // Effect names match unobfuscated 26.x source
+            player.addEffect(new MobEffectInstance(MobEffects.STRENGTH, 40, 1, true, false, false));
+            player.addEffect(new MobEffectInstance(MobEffects.SPEED, 40, 1, true, false, false));
             player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 40, 1, true, false, false));
-            player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 40, 1, true, false, false));
+            player.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, 40, 1, true, false, false));
             player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 300, 0, true, false, false));
             player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 40, 0, true, false, false));
             player.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, 40, 0, true, false, false));
@@ -54,7 +57,7 @@ public class TheDarkOne implements ModInitializer {
         ServerLivingEntityEvents.AFTER_DEATH.register((entity, damageSource) -> {
             if (!(entity instanceof ServerPlayer deadPlayer)) return;
 
-            MinecraftServer server = deadPlayer.getServer();
+            MinecraftServer server = deadPlayer.level().getServer();
             if (server == null) return;
 
             DarkOneState state = DarkOneState.get(server);
@@ -119,9 +122,12 @@ public class TheDarkOne implements ModInitializer {
             }
         }
 
-        for (var level : server.getAllLevels()) {
-            for (ItemEntity itemEntity : level.getEntitiesOfClass(ItemEntity.class,
-                    e -> e.getItem().is(ModItems.DARK_ONES_DAGGER))) {
+        // Search dropped items near each online player (simpler than full world scan)
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            AABB box = player.getBoundingBox().inflate(64);
+            List<ItemEntity> items = player.level().getEntitiesOfClass(ItemEntity.class, box,
+                    e -> e.getItem().is(ModItems.DARK_ONES_DAGGER));
+            for (ItemEntity itemEntity : items) {
                 if (found.isEmpty()) {
                     found = itemEntity.getItem().copy();
                 }
@@ -136,7 +142,7 @@ public class TheDarkOne implements ModInitializer {
         }
     }
 
-    public static ResourceLocation id(String path) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    public static Identifier id(String path) {
+        return Identifier.fromNamespaceAndPath(MOD_ID, path);
     }
 }

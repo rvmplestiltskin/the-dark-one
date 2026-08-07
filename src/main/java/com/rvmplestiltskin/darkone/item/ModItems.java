@@ -4,15 +4,15 @@ import com.rvmplestiltskin.darkone.TheDarkOne;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 
 public class ModItems {
 
     public static final ResourceKey<Item> DARK_ONES_DAGGER_KEY = ResourceKey.create(
             Registries.ITEM,
-            ResourceLocation.fromNamespaceAndPath(TheDarkOne.MOD_ID, "dark_ones_dagger")
+            Identifier.fromNamespaceAndPath(TheDarkOne.MOD_ID, "dark_ones_dagger")
     );
 
     public static final Item DARK_ONES_DAGGER = register(
