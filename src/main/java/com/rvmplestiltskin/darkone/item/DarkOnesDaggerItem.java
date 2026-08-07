@@ -3,6 +3,7 @@ package com.rvmplestiltskin.darkone.item;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -34,6 +35,9 @@ public class DarkOnesDaggerItem extends Item {
 
     /** Cooldown in ticks (10 seconds) */
     public static final int PURGE_COOLDOWN = 20 * 10;
+
+    private static final Identifier COOLDOWN_ID =
+            Identifier.fromNamespaceAndPath("the-dark-one", "dagger_purge");
 
     public DarkOnesDaggerItem(Properties properties) {
         super(properties);
@@ -68,7 +72,8 @@ public class DarkOnesDaggerItem extends Item {
             return InteractionResult.SUCCESS;
         }
 
-        if (player.getCooldowns().isOnCooldown(this)) {
+        // 26.2: cooldown keyed by Identifier or ItemStack
+        if (player.getCooldowns().isOnCooldown(COOLDOWN_ID) || player.getCooldowns().isOnCooldown(stack)) {
             return InteractionResult.FAIL;
         }
 
@@ -85,7 +90,6 @@ public class DarkOnesDaggerItem extends Item {
 
         int killed = 0;
         for (LivingEntity mob : hostiles) {
-            // Dramatic death without loot spam at extreme scale — discard cleanly
             serverLevel.sendParticles(ParticleTypes.SOUL,
                     mob.getX(), mob.getY() + 0.5, mob.getZ(),
                     8, 0.3, 0.5, 0.3, 0.02);
@@ -93,7 +97,7 @@ public class DarkOnesDaggerItem extends Item {
             killed++;
         }
 
-        player.getCooldowns().addCooldown(this, PURGE_COOLDOWN);
+        player.getCooldowns().addCooldown(COOLDOWN_ID, PURGE_COOLDOWN);
 
         serverLevel.playSound(null, player.blockPosition(),
                 SoundEvents.WITHER_DEATH, SoundSource.PLAYERS, 0.6f, 1.5f);
