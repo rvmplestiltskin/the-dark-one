@@ -36,6 +36,7 @@ public class TheDarkOne implements ModInitializer {
         DarkOneCommands.register();
         ModNetworking.register();
 
+        // Passiveives + slow falling while Dark One
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             DarkOneState state = DarkOneState.get(server);
             UUID darkOneId = state.getDarkOneUuid();
@@ -44,16 +45,41 @@ public class TheDarkOne implements ModInitializer {
             ServerPlayer player = server.getPlayerList().getPlayer(darkOneId);
             if (player == null || !player.isAlive()) return;
 
-            // Effect names match unobfuscated 26.x source
-            player.addEffect(new MobEffectInstance(MobEffects.STRENGTH, 40, 1, true, false, false));
+            player.addEffect(new MobEffectInstance(MobEffects.STRENGTH, 40, 2, true, false, false));
             player.addEffect(new MobEffectInstance(MobEffects.SPEED, 40, 1, true, false, false));
-            player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 40, 1, true, false, false));
-            player.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, 40, 1, true, false, false));
+            player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 40, 2, true, false, false));
+            player.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, 40, 3, true, false, false));
             player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 300, 0, true, false, false));
             player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 40, 0, true, false, false));
             player.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, 40, 0, true, false, false));
+            player.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 40, 1, true, false, false));
         });
 
+        // Immortality: cancel ALL damage unless attacker holds the dagger
+        ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
+            if (!(entity instanceof ServerPlayer victim)) return true;
+
+            MinecraftServer server = victim.level().getServer();
+            if (server == null) return true;
+
+            DarkOneState state = DarkOneState.get(server);
+            if (!state.isDarkOne(victim.getUUID())) return true;
+
+            // Only the dagger can harm the Dark One
+            if (source.getEntity() instanceof ServerPlayer attacker) {
+                ItemStack main = attacker.getMainHandItem();
+                ItemStack off = attacker.getOffhandItem();
+                boolean holdingDagger = main.is(ModItems.DARK_ONES_DAGGER) || off.is(ModItems.DARK_ONES_DAGGER);
+                if (holdingDagger) {
+                    return true; // allow dagger damage
+                }
+            }
+
+            // Block everything else (fall, fire, mobs, void is still deadly in some cases)
+            return false;
+        });
+
+        // Death transfer with dagger
         ServerLivingEntityEvents.AFTER_DEATH.register((entity, damageSource) -> {
             if (!(entity instanceof ServerPlayer deadPlayer)) return;
 
@@ -66,18 +92,16 @@ public class TheDarkOne implements ModInitializer {
             if (damageSource.getEntity() instanceof ServerPlayer killer) {
                 ItemStack main = killer.getMainHandItem();
                 ItemStack off = killer.getOffhandItem();
-
                 boolean holdingDagger = main.is(ModItems.DARK_ONES_DAGGER) || off.is(ModItems.DARK_ONES_DAGGER);
 
                 if (holdingDagger) {
                     state.setDarkOne(killer.getUUID());
                     transferDaggerTo(server, killer);
-
                     server.getPlayerList().broadcastSystemMessage(
                             Component.translatable("message.the-dark-one.transferred", killer.getName()),
                             false
                     );
-                    LOGGER.info("{} has taken the power of the Dark One from {}",
+                    LOGGER.info("{} took the Dark One power from {}",
                             killer.getName().getString(), deadPlayer.getName().getString());
                 } else {
                     state.clearDarkOne();
@@ -114,29 +138,23 @@ public class TheDarkOne implements ModInitializer {
             for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
                 ItemStack stack = player.getInventory().getItem(i);
                 if (stack.is(ModItems.DARK_ONES_DAGGER)) {
-                    if (found.isEmpty()) {
-                        found = stack.copy();
-                    }
+                    if (found.isEmpty()) found = stack.copy();
                     player.getInventory().setItem(i, ItemStack.EMPTY);
                 }
             }
         }
 
-        // Search dropped items near each online player (simpler than full world scan)
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             AABB box = player.getBoundingBox().inflate(64);
             List<ItemEntity> items = player.level().getEntitiesOfClass(ItemEntity.class, box,
                     e -> e.getItem().is(ModItems.DARK_ONES_DAGGER));
             for (ItemEntity itemEntity : items) {
-                if (found.isEmpty()) {
-                    found = itemEntity.getItem().copy();
-                }
+                if (found.isEmpty()) found = itemEntity.getItem().copy();
                 itemEntity.discard();
             }
         }
 
         ItemStack toGive = found.isEmpty() ? new ItemStack(ModItems.DARK_ONES_DAGGER) : found;
-
         if (!target.getInventory().add(toGive)) {
             target.drop(toGive, false);
         }

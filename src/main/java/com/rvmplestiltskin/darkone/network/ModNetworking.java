@@ -13,8 +13,9 @@ import net.minecraft.world.phys.Vec3;
 
 public class ModNetworking {
 
+    public static final double TELEPORT_DISTANCE = 32.0;
+
     public static void register() {
-        // 26.2 Fabric API: serverboundPlay = client -> server
         PayloadTypeRegistry.serverboundPlay().register(TeleportPayload.TYPE, TeleportPayload.STREAM_CODEC);
 
         ServerPlayNetworking.registerGlobalReceiver(TeleportPayload.TYPE, (payload, context) -> {
@@ -26,24 +27,24 @@ public class ModNetworking {
                 }
 
                 Vec3 look = player.getLookAngle();
-                Vec3 target = player.position().add(look.scale(8.0));
+                Vec3 target = player.position().add(look.scale(TELEPORT_DISTANCE));
 
                 ServerLevel level = (ServerLevel) player.level();
 
                 level.sendParticles(ParticleTypes.PORTAL,
                         player.getX(), player.getY() + 1, player.getZ(),
-                        30, 0.5, 1.0, 0.5, 0.1);
+                        40, 0.5, 1.0, 0.5, 0.15);
 
                 player.teleportTo(target.x, target.y, target.z);
                 player.fallDistance = 0;
 
                 level.sendParticles(ParticleTypes.PORTAL,
                         target.x, target.y + 1, target.z,
-                        40, 0.5, 1.0, 0.5, 0.15);
+                        50, 0.6, 1.2, 0.6, 0.2);
 
                 level.playSound(null, BlockPos.containing(target),
                         SoundEvents.ENDERMAN_TELEPORT,
-                        SoundSource.PLAYERS, 1.0f, 0.7f);
+                        SoundSource.PLAYERS, 1.0f, 0.6f);
             });
         });
     }
