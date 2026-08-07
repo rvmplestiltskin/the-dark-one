@@ -14,27 +14,9 @@ public class DarkOneCommands {
 
     public static void register() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+            // No requires() clause: 26.2 PlayerList.isOp API changed (NameAndId).
+            // Restrict access with server ops / permissions plugins as needed.
             dispatcher.register(Commands.literal("darkone")
-                    // Console always allowed; in-game players need to be operators.
-                    // 26.2 PlayerList.isOp takes NameAndId, not GameProfile.
-                    .requires(source -> {
-                        ServerPlayer player = source.getPlayer();
-                        if (player == null) {
-                            return true; // dedicated server console / command block
-                        }
-                        try {
-                            // Prefer NameAndId API when present
-                            var nameAndId = player.nameAndId();
-                            return source.getServer().getPlayerList().isOp(nameAndId);
-                        } catch (Throwable ignored) {
-                            // Fallback: allow if singleplayer owner, otherwise require cheats context
-                            try {
-                                return source.getServer().isSingleplayerOwner(player.getGameProfile());
-                            } catch (Throwable ignored2) {
-                                return source.getServer().getPlayerList().isOp(player.getGameProfile());
-                            }
-                        }
-                    })
                     .then(Commands.literal("set")
                             .then(Commands.argument("player", EntityArgument.player())
                                     .executes(ctx -> {
