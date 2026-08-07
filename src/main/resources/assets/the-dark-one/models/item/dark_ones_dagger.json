@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "the-dark-one:item/dark_ones_dagger"
+  }
+}
