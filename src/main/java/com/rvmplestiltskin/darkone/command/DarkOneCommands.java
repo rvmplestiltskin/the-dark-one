@@ -1,11 +1,9 @@
 package com.rvmplestiltskin.darkone.command;
 
-import com.mojang.brigadier.CommandDispatcher;
 import com.rvmplestiltskin.darkone.TheDarkOne;
 import com.rvmplestiltskin.darkone.state.DarkOneState;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
@@ -27,7 +25,8 @@ public class DarkOneCommands {
                                         DarkOneState state = DarkOneState.get(ctx.getSource().getServer());
 
                                         state.setDarkOne(target.getUuid());
-                                        TheDarkOne.giveDaggerTo(target);
+                                        // Never creates a second dagger — only moves the existing one (or creates the first)
+                                        TheDarkOne.transferDaggerTo(ctx.getSource().getServer(), target);
 
                                         ctx.getSource().getServer().getPlayerManager().broadcast(
                                                 Text.translatable("message.the-dark-one.became", target.getName()),
