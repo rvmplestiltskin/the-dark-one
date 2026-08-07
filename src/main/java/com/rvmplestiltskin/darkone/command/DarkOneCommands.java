@@ -88,6 +88,11 @@ public class DarkOneCommands {
                             .then(Commands.literal("templates")
                                     .executes(DarkOneCommands::listTemplates)
                             )
+                            .then(Commands.literal("template")
+                                    .then(Commands.argument("id", StringArgumentType.word())
+                                            .executes(DarkOneCommands::readTemplate)
+                                    )
+                            )
                             .then(Commands.literal("offer")
                                     .then(Commands.argument("player", EntityArgument.player())
                                             .then(Commands.literal("template")
@@ -114,9 +119,56 @@ public class DarkOneCommands {
                                             .executes(DarkOneCommands::readContract)
                                     )
                             )
+                            .then(Commands.literal("fulfill")
+                                    .then(Commands.argument("index", IntegerArgumentType.integer(1))
+                                            .executes(DarkOneCommands::fulfillContract)
+                                    )
+                            )
                     )
             );
         });
+    }
+
+    private static int listTemplates(CommandContext<CommandSourceStack> ctx) {
+        ctx.getSource().sendSuccess(() -> Component.literal("=== PLANTILLAS DE CONTRATO ==="), false);
+        ctx.getSource().sendSuccess(() -> Component.literal("IDs disponibles:"), false);
+        int n = 1;
+        for (String id : ContractTemplates.TEMPLATES.keySet()) {
+            final int num = n++;
+            final String tid = id;
+            ctx.getSource().sendSuccess(() -> Component.literal("  " + num + ". [" + tid + "]"), false);
+        }
+        ctx.getSource().sendSuccess(() -> Component.literal(""), false);
+        ctx.getSource().sendSuccess(() -> Component.literal(
+                "Leer completa: /darkone contract template <id>"), false);
+        ctx.getSource().sendSuccess(() -> Component.literal(
+                "Ofrecer: /darkone contract offer <jugador> template <id>"), false);
+        return 1;
+    }
+
+    private static int readTemplate(CommandContext<CommandSourceStack> ctx) {
+        String id = StringArgumentType.getString(ctx, "id");
+        String terms = ContractTemplates.get(id);
+        if (terms == null) {
+            ctx.getSource().sendFailure(Component.literal(
+                    "Plantilla desconocida: " + id + ". Usa /darkone contract templates"));
+            return 0;
+        }
+        ctx.getSource().sendSuccess(() -> Component.literal("=== PLANTILLA [" + id.toLowerCase() + "] ==="), false);
+        ServerPlayer player = ctx.getSource().getPlayer();
+        if (player != null) {
+            sendLongMessage(player, terms);
+        } else {
+            // console: send in chunks via sendSuccess
+            int max = 200;
+            for (int i = 0; i < terms.length(); i += max) {
+                int end = Math.min(i + max, terms.length());
+                String chunk = terms.substring(i, end);
+                ctx.getSource().sendSuccess(() -> Component.literal(chunk), false);
+            }
+        }
+        ctx.getSource().sendSuccess(() -> Component.literal("=== FIN [" + id.toLowerCase() + "] ==="), false);
+        return 1;
     }
 
     private static int punish(CommandContext<CommandSourceStack> ctx, ContractEnforcement.Severity severity) throws CommandSyntaxException {
@@ -173,26 +225,15 @@ public class DarkOneCommands {
         return main.is(ModItems.DARK_ONES_DAGGER) || off.is(ModItems.DARK_ONES_DAGGER);
     }
 
-    private static int listTemplates(CommandContext<CommandSourceStack> ctx) {
-        ctx.getSource().sendSuccess(() -> Component.translatable("message.the-dark-one.templates_header"), false);
-        for (var e : ContractTemplates.TEMPLATES.entrySet()) {
-            String id = e.getKey();
-            String preview = e.getValue().length() > 80 ? e.getValue().substring(0, 80) + "..." : e.getValue();
-            ctx.getSource().sendSuccess(() -> Component.literal("- " + id + ": " + preview), false);
-        }
-        ctx.getSource().sendSuccess(() -> Component.translatable("message.the-dark-one.templates_usage"), false);
-        return 1;
-    }
-
     private static int offerTemplate(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         String id = StringArgumentType.getString(ctx, "id");
         String terms = ContractTemplates.get(id);
         if (terms == null) {
-            ctx.getSource().sendFailure(Component.translatable(
-                    "message.the-dark-one.template_unknown", id, ContractTemplates.listIds()));
+            ctx.getSource().sendFailure(Component.literal(
+                    "Plantilla desconocida: " + id + ". IDs: " + ContractTemplates.listIds()));
             return 0;
         }
-        return offerTo(ctx, terms, id);
+        return offerTo(ctx, terms, id.toLowerCase());
     }
 
     private static int offerCustom(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
@@ -218,18 +259,20 @@ public class DarkOneCommands {
         }
         state.addOffer(new DarkOneState.ContractOffer(offerer.getUUID(), target.getUUID(), terms, templateId));
 
-        offerer.sendSystemMessage(Component.translatable(
-                "message.the-dark-one.contract_offered", target.getName()));
+        String idLabel = templateId.isEmpty() ? "(texto libre)" : "[" + templateId + "]";
+        offerer.sendSystemMessage(Component.literal(
+                "Ofreciste contrato " + idLabel + " a " + target.getName().getString() + ":"));
         sendLongMessage(offerer, terms);
-        target.sendSystemMessage(Component.translatable(
-                "message.the-dark-one.contract_received", offerer.getName()));
+        target.sendSystemMessage(Component.literal(
+                offerer.getName().getString() + " te ofrece un contrato " + idLabel + ". Lee completo:"));
         sendLongMessage(target, terms);
-        target.sendSystemMessage(Component.translatable("message.the-dark-one.contract_accept_hint"));
+        target.sendSystemMessage(Component.literal(
+                "/darkone contract accept  |  /darkone contract decline"));
         return 1;
     }
 
     private static void sendLongMessage(ServerPlayer player, String text) {
-        int max = 200;
+        int max = 180;
         for (int i = 0; i < text.length(); i += max) {
             int end = Math.min(i + max, text.length());
             player.sendSystemMessage(Component.literal(text.substring(i, end)));
@@ -250,7 +293,7 @@ public class DarkOneCommands {
         }
         state.addContract(new DarkOneState.Contract(
                 offer.offerer(), offer.target(), offer.terms(), System.currentTimeMillis(),
-                offer.templateId(), 0));
+                offer.templateId(), 0, false));
 
         ServerPlayer offerer = ctx.getSource().getServer().getPlayerList().getPlayer(offer.offerer());
         player.sendSystemMessage(Component.translatable("message.the-dark-one.contract_accepted"));
@@ -293,11 +336,9 @@ public class DarkOneCommands {
         DarkOneState state = DarkOneState.get(ctx.getSource().getServer());
         MinecraftServer server = ctx.getSource().getServer();
 
-        List<DarkOneState.Contract> list;
+        List<DarkOneState.Contract> list = state.getContracts();
         if (player != null && !state.isDarkOne(player.getUUID())) {
             list = state.getContractsInvolving(player.getUUID());
-        } else {
-            list = state.getContracts();
         }
 
         if (list.isEmpty()) {
@@ -305,20 +346,27 @@ public class DarkOneCommands {
             return 1;
         }
 
-        ctx.getSource().sendSuccess(() -> Component.translatable("message.the-dark-one.contract_list_header"), false);
-        int i = 1;
-        for (DarkOneState.Contract c : list) {
+        ctx.getSource().sendSuccess(() -> Component.literal("=== CONTRATOS ==="), false);
+        // Show with index matching full storage for Dark One fulfill
+        List<DarkOneState.Contract> all = state.getContracts();
+        int display = 1;
+        for (int i = 0; i < all.size(); i++) {
+            DarkOneState.Contract c = all.get(i);
+            if (player != null && !state.isDarkOne(player.getUUID())) {
+                if (!c.partyA().equals(player.getUUID()) && !c.partyB().equals(player.getUUID())) continue;
+            }
             String a = nameOf(server, c.partyA());
             String b = nameOf(server, c.partyB());
-            String preview = c.terms().length() > 50 ? c.terms().substring(0, 50) + "..." : c.terms();
-            final int idx = i;
-            final int viol = c.violations();
+            String tid = c.templateId().isEmpty() ? "libre" : c.templateId();
+            String status = c.fulfilled() ? "CUMPLIDO" : "ACTIVO";
+            final int idx = i + 1;
+            final int d = display++;
             ctx.getSource().sendSuccess(() -> Component.literal(
-                    idx + ". " + a + " <-> " + b + " [violaciones: " + viol + "]: " + preview), false);
-            i++;
+                    idx + ". [" + tid + "] " + a + " <-> " + b
+                            + " | " + status + " | violaciones: " + c.violations()), false);
         }
-        ctx.getSource().sendSuccess(() -> Component.translatable("message.the-dark-one.contract_read_hint"), false);
-        ctx.getSource().sendSuccess(() -> Component.translatable("message.the-dark-one.contract_unbreakable"), false);
+        ctx.getSource().sendSuccess(() -> Component.literal(
+                "Leer: /darkone contract read <n> | Cumplir: /darkone contract fulfill <n>"), false);
         return 1;
     }
 
@@ -327,29 +375,89 @@ public class DarkOneCommands {
         DarkOneState state = DarkOneState.get(ctx.getSource().getServer());
         MinecraftServer server = ctx.getSource().getServer();
 
-        List<DarkOneState.Contract> list;
-        if (player != null && !state.isDarkOne(player.getUUID())) {
-            list = state.getContractsInvolving(player.getUUID());
-        } else {
-            list = state.getContracts();
-        }
-
+        List<DarkOneState.Contract> all = state.getContracts();
         int index = IntegerArgumentType.getInteger(ctx, "index") - 1;
-        if (index < 0 || index >= list.size()) {
+        if (index < 0 || index >= all.size()) {
             ctx.getSource().sendFailure(Component.translatable("message.the-dark-one.contract_bad_index"));
             return 0;
         }
 
-        DarkOneState.Contract c = list.get(index);
+        DarkOneState.Contract c = all.get(index);
+        if (player != null && !state.isDarkOne(player.getUUID())) {
+            if (!c.partyA().equals(player.getUUID()) && !c.partyB().equals(player.getUUID())) {
+                ctx.getSource().sendFailure(Component.literal("No eres parte de ese contrato."));
+                return 0;
+            }
+        }
+
+        String tid = c.templateId().isEmpty() ? "texto libre" : c.templateId();
+        String status = c.fulfilled() ? "CUMPLIDO" : "ACTIVO";
+        ctx.getSource().sendSuccess(() -> Component.literal(
+                "=== Contrato #" + (index + 1) + " [" + tid + "] " + status + " ==="), false);
         ctx.getSource().sendSuccess(() -> Component.literal(
                 nameOf(server, c.partyA()) + " <-> " + nameOf(server, c.partyB())
                         + " | violaciones: " + c.violations()), false);
         if (player != null) {
             sendLongMessage(player, c.terms());
         } else {
-            ctx.getSource().sendSuccess(() -> Component.literal(c.terms()), false);
+            int max = 180;
+            for (int i = 0; i < c.terms().length(); i += max) {
+                int end = Math.min(i + max, c.terms().length());
+                String chunk = c.terms().substring(i, end);
+                ctx.getSource().sendSuccess(() -> Component.literal(chunk), false);
+            }
         }
-        ctx.getSource().sendSuccess(() -> Component.translatable("message.the-dark-one.contract_unbreakable"), false);
+        ctx.getSource().sendSuccess(() -> Component.literal("=== FIN ==="), false);
+        return 1;
+    }
+
+    private static int fulfillContract(CommandContext<CommandSourceStack> ctx) {
+        ServerPlayer player = ctx.getSource().getPlayer();
+        if (player == null) {
+            ctx.getSource().sendFailure(Component.literal("Players only."));
+            return 0;
+        }
+        DarkOneState state = DarkOneState.get(ctx.getSource().getServer());
+        if (!state.isDarkOne(player.getUUID())) {
+            ctx.getSource().sendFailure(Component.literal(
+                    "Solo el Oscuro puede declarar un contrato como cumplido."));
+            return 0;
+        }
+
+        int index = IntegerArgumentType.getInteger(ctx, "index") - 1;
+        List<DarkOneState.Contract> all = state.getContracts();
+        if (index < 0 || index >= all.size()) {
+            ctx.getSource().sendFailure(Component.translatable("message.the-dark-one.contract_bad_index"));
+            return 0;
+        }
+
+        DarkOneState.Contract c = all.get(index);
+        if (c.fulfilled()) {
+            ctx.getSource().sendFailure(Component.literal("Ese contrato ya estaba cumplido."));
+            return 0;
+        }
+
+        if (!state.fulfillContract(index)) {
+            ctx.getSource().sendFailure(Component.literal("No se pudo cumplir."));
+            return 0;
+        }
+
+        MinecraftServer server = ctx.getSource().getServer();
+        String a = nameOf(server, c.partyA());
+        String b = nameOf(server, c.partyB());
+        server.getPlayerList().broadcastSystemMessage(
+                Component.literal("El Oscuro declara cumplido el contrato entre " + a + " y " + b + "."),
+                false
+        );
+
+        // Notify the other party if online
+        UUID other = c.partyA().equals(player.getUUID()) ? c.partyB() : c.partyA();
+        ServerPlayer otherPlayer = server.getPlayerList().getPlayer(other);
+        if (otherPlayer != null) {
+            otherPlayer.sendSystemMessage(Component.literal(
+                    "Tu contrato con el Oscuro ha sido declarado CUMPLIDO. Quedas liberado de esa deuda."));
+        }
+
         return 1;
     }
 

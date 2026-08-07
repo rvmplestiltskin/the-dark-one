@@ -36,7 +36,8 @@ public class DarkOneState extends SavedData {
                     Codec.STRING.fieldOf("terms").forGetter(Contract::terms),
                     Codec.LONG.fieldOf("createdAt").forGetter(Contract::createdAtMs),
                     Codec.STRING.optionalFieldOf("templateId", "").forGetter(Contract::templateId),
-                    Codec.INT.optionalFieldOf("violations", 0).forGetter(Contract::violations)
+                    Codec.INT.optionalFieldOf("violations", 0).forGetter(Contract::violations),
+                    Codec.BOOL.optionalFieldOf("fulfilled", false).forGetter(Contract::fulfilled)
             ).apply(instance, Contract::new)
     );
 
@@ -64,8 +65,6 @@ public class DarkOneState extends SavedData {
     private UUID darkOneUuid = null;
     private List<ContractOffer> pendingOffers = new ArrayList<>();
     private List<Contract> contracts = new ArrayList<>();
-
-    /** Cooldown to avoid spamming auto-punish (uuid -> last punish time ms) */
     private final Map<UUID, Long> lastAutoPunish = new HashMap<>();
 
     public DarkOneState() {
@@ -116,6 +115,14 @@ public class DarkOneState extends SavedData {
         return List.copyOf(contracts);
     }
 
+    public List<Contract> getActiveContracts() {
+        List<Contract> result = new ArrayList<>();
+        for (Contract c : contracts) {
+            if (!c.fulfilled) result.add(c);
+        }
+        return result;
+    }
+
     public List<Contract> getContractsInvolving(UUID uuid) {
         List<Contract> result = new ArrayList<>();
         for (Contract c : contracts) {
@@ -126,12 +133,33 @@ public class DarkOneState extends SavedData {
         return result;
     }
 
+    public List<Contract> getActiveContractsInvolving(UUID uuid) {
+        List<Contract> result = new ArrayList<>();
+        for (Contract c : contracts) {
+            if (!c.fulfilled && (c.partyA.equals(uuid) || c.partyB.equals(uuid))) {
+                result.add(c);
+            }
+        }
+        return result;
+    }
+
+    /** Mark contract by index in the full list as fulfilled. Only Dark One should call. */
+    public boolean fulfillContract(int index) {
+        if (index < 0 || index >= contracts.size()) return false;
+        Contract c = contracts.get(index);
+        if (c.fulfilled) return false;
+        contracts.set(index, new Contract(c.partyA, c.partyB, c.terms, c.createdAtMs,
+                c.templateId, c.violations, true));
+        setDirty();
+        return true;
+    }
+
     public void recordViolation(UUID offender) {
         for (int i = 0; i < contracts.size(); i++) {
             Contract c = contracts.get(i);
-            if (c.partyA.equals(offender) || c.partyB.equals(offender)) {
+            if (!c.fulfilled && (c.partyA.equals(offender) || c.partyB.equals(offender))) {
                 contracts.set(i, new Contract(c.partyA, c.partyB, c.terms, c.createdAtMs,
-                        c.templateId, c.violations + 1));
+                        c.templateId, c.violations + 1, false));
             }
         }
         setDirty();
@@ -160,9 +188,9 @@ public class DarkOneState extends SavedData {
     }
 
     public record Contract(UUID partyA, UUID partyB, String terms, long createdAtMs,
-                           String templateId, int violations) {
+                           String templateId, int violations, boolean fulfilled) {
         public Contract(UUID partyA, UUID partyB, String terms, long createdAtMs) {
-            this(partyA, partyB, terms, createdAtMs, "", 0);
+            this(partyA, partyB, terms, createdAtMs, "", 0, false);
         }
     }
 }

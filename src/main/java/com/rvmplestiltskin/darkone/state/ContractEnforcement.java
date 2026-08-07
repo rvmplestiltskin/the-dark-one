@@ -13,9 +13,6 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.UUID;
 
-/**
- * Magical punishments for contract violations — manual or automatic.
- */
 public final class ContractEnforcement {
 
     private ContractEnforcement() {}
@@ -30,6 +27,7 @@ public final class ContractEnforcement {
         DarkOneState state = DarkOneState.get(server);
         if (state.getDarkOneUuid() == null) return false;
 
+        // Only active (unfulfilled) contracts bind
         boolean bound = isBoundToDarkOne(server, target.getUUID());
         if (!bound) return false;
 
@@ -57,10 +55,7 @@ public final class ContractEnforcement {
                 target.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 20 * 60, 0));
                 target.addEffect(new MobEffectInstance(MobEffects.UNLUCK, 20 * 60 * 10, 1));
                 target.hurt(target.damageSources().magic(), 12.0f);
-
-                // Strip inventory — the price of betrayal (items vanish, do not drop)
                 clearInventory(target);
-
                 level.playSound(null, target.blockPosition(), SoundEvents.WITHER_SPAWN, SoundSource.PLAYERS, 0.5f, 1.4f);
                 level.playSound(null, target.blockPosition(), SoundEvents.ELDER_GUARDIAN_CURSE, SoundSource.PLAYERS, 1.0f, 0.7f);
             }
@@ -85,7 +80,6 @@ public final class ContractEnforcement {
         return true;
     }
 
-    /** Clears main inventory, armor, and offhand. Items vanish — they do not drop. */
     private static void clearInventory(ServerPlayer player) {
         for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
             player.getInventory().setItem(i, ItemStack.EMPTY);
@@ -94,11 +88,12 @@ public final class ContractEnforcement {
         player.containerMenu.broadcastChanges();
     }
 
+    /** Bound only by active (not fulfilled) contracts with the Dark One. */
     public static boolean isBoundToDarkOne(MinecraftServer server, UUID playerId) {
         DarkOneState state = DarkOneState.get(server);
         UUID dark = state.getDarkOneUuid();
         if (dark == null || dark.equals(playerId)) return false;
-        for (DarkOneState.Contract c : state.getContractsInvolving(playerId)) {
+        for (DarkOneState.Contract c : state.getActiveContractsInvolving(playerId)) {
             if (c.partyA().equals(dark) || c.partyB().equals(dark)) {
                 return true;
             }
