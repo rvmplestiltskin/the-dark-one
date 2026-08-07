@@ -21,6 +21,7 @@ public class ModItems {
                     .setId(DARK_ONES_DAGGER_KEY)
                     .stacksTo(1)
                     .fireResistant()
+                    .durability(0) // unbreakable feel
             )
     );
 

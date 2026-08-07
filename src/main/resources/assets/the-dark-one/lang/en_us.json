@@ -1,11 +1,14 @@
 {
   "item.the-dark-one.dark_ones_dagger": "The Dark One's Dagger",
   "item.the-dark-one.dark_ones_dagger.tooltip": "There is only one. Whoever holds it can take the power.",
+  "item.the-dark-one.dark_ones_dagger.tooltip2": "Near the Dark One: binds and weakens them.",
+  "item.the-dark-one.dark_ones_dagger.tooltip3": "The only blade that can end the Dark One.",
   "key.the-dark-one.teleport": "Dark Teleport",
   "key.category.the-dark-one.dark_one": "The Dark One",
   "message.the-dark-one.became": "%s is now The Dark One",
   "message.the-dark-one.cleared": "The Dark One power has been removed",
   "message.the-dark-one.current": "The current Dark One is: %s",
   "message.the-dark-one.none": "There is currently no Dark One",
-  "message.the-dark-one.transferred": "%s has taken the power of the Dark One!"
+  "message.the-dark-one.transferred": "%s has taken the power of the Dark One!",
+  "message.the-dark-one.transferred_dramatic": "The darkness shifts... %s has claimed the power from %s. The dagger has chosen."
 }
