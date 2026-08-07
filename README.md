@@ -1,8 +1,8 @@
 # The Dark One
 
-Minecraft Fabric mod inspired by **Rumplestiltskin / The Dark One** from *Once Upon a Time*.
+A Fabric mod that allows **one player** to become The Dark One.
 
-Only **one** player can be the Dark One at a time.
+Only one Dark One can exist at a time. The power can be claimed by an operator or transferred by killing the current Dark One while holding the unique dagger.
 
 ## Features
 
@@ -13,35 +13,31 @@ Only **one** player can be the Dark One at a time.
 - Damage Resistance
 - Permanent Night Vision
 - Fire Resistance
-- Water Breathing / no drowning
+- Water Breathing
 
 ### Active Ability
-- Teleportation (keybind, default `V`) with dark particles
+- Short-range teleport (default key: `V`) with dark particles. Only usable by the current Dark One.
 
 ### The Dark One's Dagger
-- Unique item with custom texture
-- Only one exists in the world
-- Holding the dagger allows you to harm/control the current Dark One more effectively
-- **Killing the Dark One while holding the dagger** transfers the power to you and gives you the dagger
-- When an admin uses the command to set a new Dark One, the dagger is automatically given to them
+- There is **only one** dagger in the entire world.
+- The dagger is never duplicated by commands.
+- When an operator sets a new Dark One, the existing dagger (if any) is moved to that player.
+- Killing the current Dark One while holding the dagger transfers both the power and the dagger to the killer.
 
-### Commands (OP only)
+### Commands (requires permission level 2)
 ```
-/darkone set <player>     - Makes the player the Dark One and gives them the dagger
-/darkone clear            - Removes the current Dark One status
-/darkone who              - Shows who the current Dark One is
+/darkone set <player>   - Makes the player the Dark One and moves the dagger to them
+/darkone clear          - Removes the Dark One status
+/darkone who            - Shows who the current Dark One is
 ```
 
 ## Installation
 
-1. Install Fabric Loader for your Minecraft version
-2. Install Fabric API
-3. Drop this mod in your `mods` folder
-4. (Recommended) Use with Iris + Sodium + Spooklementary for the dark atmosphere
+1. Install Fabric Loader for Minecraft 26.2
+2. Install Fabric API for 26.2
+3. Place this mod in the `mods` folder
 
-## Current Target
-- Primary: Minecraft **1.21.1** (most stable with shaders)
-- 26.2 support can be added later once mappings stabilize
+## Notes
 
-## Credits
-Created for a Once Upon a Time themed castle world.
+- Primary target: **Minecraft 26.2**
+- The mod is intentionally generic and original. No external franchise content is included.

@@ -1,6 +1,6 @@
 {
   "item.the-dark-one.dark_ones_dagger": "La Daga del Oscuro",
-  "item.the-dark-one.dark_ones_dagger.tooltip": "Quien empuñe esta daga controla al Oscuro... o puede tomar el poder para sí mismo.",
+  "item.the-dark-one.dark_ones_dagger.tooltip": "Solo existe una. Quien la empuñe puede tomar el poder.",
   "key.the-dark-one.teleport": "Teletransporte Oscuro",
   "category.the-dark-one": "El Oscuro",
   "message.the-dark-one.became": "%s ahora es El Oscuro",

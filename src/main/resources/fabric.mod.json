@@ -3,7 +3,7 @@
   "id": "the-dark-one",
   "version": "${version}",
   "name": "The Dark One",
-  "description": "Become Rumplestiltskin / The Dark One from Once Upon a Time. Only one player can hold the power at a time.",
+  "description": "Only one player can hold the power of the Dark One at a time. Transferable by command or by the unique dagger.",
   "authors": ["rvmplestiltskin"],
   "contact": {
     "sources": "https://github.com/rvmplestiltskin/the-dark-one"
@@ -24,7 +24,7 @@
   ],
   "depends": {
     "fabricloader": ">=0.16.0",
-    "minecraft": "~1.21.1",
+    "minecraft": "~26.2",
     "java": ">=21",
     "fabric-api": "*"
   }
