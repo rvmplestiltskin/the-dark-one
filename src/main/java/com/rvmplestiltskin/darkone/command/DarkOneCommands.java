@@ -6,6 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.rvmplestiltskin.darkone.TheDarkOne;
 import com.rvmplestiltskin.darkone.item.ModItems;
+import com.rvmplestiltskin.darkone.state.ContractTemplates;
 import com.rvmplestiltskin.darkone.state.DarkOneState;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.commands.CommandSourceStack;
@@ -16,8 +17,6 @@ import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
@@ -74,10 +73,18 @@ public class DarkOneCommands {
                             )
                     )
                     .then(Commands.literal("contract")
+                            .then(Commands.literal("templates")
+                                    .executes(DarkOneCommands::listTemplates)
+                            )
                             .then(Commands.literal("offer")
                                     .then(Commands.argument("player", EntityArgument.player())
+                                            .then(Commands.literal("template")
+                                                    .then(Commands.argument("id", StringArgumentType.word())
+                                                            .executes(DarkOneCommands::offerTemplate)
+                                                    )
+                                            )
                                             .then(Commands.argument("terms", StringArgumentType.greedyString())
-                                                    .executes(DarkOneCommands::offerContract)
+                                                    .executes(DarkOneCommands::offerCustom)
                                             )
                                     )
                             )
@@ -90,9 +97,9 @@ public class DarkOneCommands {
                             .then(Commands.literal("list")
                                     .executes(DarkOneCommands::listContracts)
                             )
-                            .then(Commands.literal("break")
+                            .then(Commands.literal("read")
                                     .then(Commands.argument("index", IntegerArgumentType.integer(1))
-                                            .executes(DarkOneCommands::breakContract)
+                                            .executes(DarkOneCommands::readContract)
                                     )
                             )
                     )
@@ -131,7 +138,34 @@ public class DarkOneCommands {
         return main.is(ModItems.DARK_ONES_DAGGER) || off.is(ModItems.DARK_ONES_DAGGER);
     }
 
-    private static int offerContract(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+    private static int listTemplates(CommandContext<CommandSourceStack> ctx) {
+        ctx.getSource().sendSuccess(() -> Component.translatable("message.the-dark-one.templates_header"), false);
+        for (var e : ContractTemplates.TEMPLATES.entrySet()) {
+            String id = e.getKey();
+            String preview = e.getValue().length() > 80 ? e.getValue().substring(0, 80) + "..." : e.getValue();
+            ctx.getSource().sendSuccess(() -> Component.literal("- " + id + ": " + preview), false);
+        }
+        ctx.getSource().sendSuccess(() -> Component.translatable("message.the-dark-one.templates_usage"), false);
+        return 1;
+    }
+
+    private static int offerTemplate(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        String id = StringArgumentType.getString(ctx, "id");
+        String terms = ContractTemplates.get(id);
+        if (terms == null) {
+            ctx.getSource().sendFailure(Component.translatable(
+                    "message.the-dark-one.template_unknown", id, ContractTemplates.listIds()));
+            return 0;
+        }
+        return offerTo(ctx, terms);
+    }
+
+    private static int offerCustom(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        String terms = StringArgumentType.getString(ctx, "terms");
+        return offerTo(ctx, terms);
+    }
+
+    private static int offerTo(CommandContext<CommandSourceStack> ctx, String terms) throws CommandSyntaxException {
         ServerPlayer offerer = ctx.getSource().getPlayer();
         if (offerer == null) {
             ctx.getSource().sendFailure(Component.literal("Players only."));
@@ -143,18 +177,29 @@ public class DarkOneCommands {
             return 0;
         }
         ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
-        String terms = StringArgumentType.getString(ctx, "terms");
         if (target.getUUID().equals(offerer.getUUID())) {
             ctx.getSource().sendFailure(Component.literal("Cannot contract yourself."));
             return 0;
         }
         state.addOffer(new DarkOneState.ContractOffer(offerer.getUUID(), target.getUUID(), terms));
+
         offerer.sendSystemMessage(Component.translatable(
-                "message.the-dark-one.contract_offered", target.getName(), terms));
+                "message.the-dark-one.contract_offered", target.getName()));
+        // Send full terms in chunks if long
+        sendLongMessage(offerer, terms);
         target.sendSystemMessage(Component.translatable(
-                "message.the-dark-one.contract_received", offerer.getName(), terms));
+                "message.the-dark-one.contract_received", offerer.getName()));
+        sendLongMessage(target, terms);
         target.sendSystemMessage(Component.translatable("message.the-dark-one.contract_accept_hint"));
         return 1;
+    }
+
+    private static void sendLongMessage(ServerPlayer player, String text) {
+        int max = 200;
+        for (int i = 0; i < text.length(); i += max) {
+            int end = Math.min(i + max, text.length());
+            player.sendSystemMessage(Component.literal(text.substring(i, end)));
+        }
     }
 
     private static int acceptContract(CommandContext<CommandSourceStack> ctx) {
@@ -173,11 +218,10 @@ public class DarkOneCommands {
                 offer.offerer(), offer.target(), offer.terms(), System.currentTimeMillis()));
 
         ServerPlayer offerer = ctx.getSource().getServer().getPlayerList().getPlayer(offer.offerer());
-        player.sendSystemMessage(Component.translatable(
-                "message.the-dark-one.contract_accepted", offer.terms()));
+        player.sendSystemMessage(Component.translatable("message.the-dark-one.contract_accepted"));
         if (offerer != null) {
             offerer.sendSystemMessage(Component.translatable(
-                    "message.the-dark-one.contract_accepted_by", player.getName(), offer.terms()));
+                    "message.the-dark-one.contract_accepted_by", player.getName()));
         }
         ctx.getSource().getServer().getPlayerList().broadcastSystemMessage(
                 Component.translatable("message.the-dark-one.contract_sealed",
@@ -231,28 +275,28 @@ public class DarkOneCommands {
         for (DarkOneState.Contract c : list) {
             String a = nameOf(server, c.partyA());
             String b = nameOf(server, c.partyB());
+            String preview = c.terms().length() > 60 ? c.terms().substring(0, 60) + "..." : c.terms();
             final int idx = i;
             ctx.getSource().sendSuccess(() -> Component.literal(
-                    idx + ". " + a + " <-> " + b + ": " + c.terms()), false);
+                    idx + ". " + a + " <-> " + b + ": " + preview), false);
             i++;
         }
-        ctx.getSource().sendSuccess(() -> Component.translatable("message.the-dark-one.contract_break_hint"), false);
+        ctx.getSource().sendSuccess(() -> Component.translatable("message.the-dark-one.contract_read_hint"), false);
+        ctx.getSource().sendSuccess(() -> Component.translatable("message.the-dark-one.contract_unbreakable"), false);
         return 1;
     }
 
-    private static int breakContract(CommandContext<CommandSourceStack> ctx) {
+    private static int readContract(CommandContext<CommandSourceStack> ctx) {
         ServerPlayer player = ctx.getSource().getPlayer();
-        if (player == null) {
-            ctx.getSource().sendFailure(Component.literal("Players only."));
-            return 0;
-        }
-
         DarkOneState state = DarkOneState.get(ctx.getSource().getServer());
         MinecraftServer server = ctx.getSource().getServer();
 
-        List<DarkOneState.Contract> list = state.isDarkOne(player.getUUID())
-                ? state.getContracts()
-                : state.getContractsInvolving(player.getUUID());
+        List<DarkOneState.Contract> list;
+        if (player != null && !state.isDarkOne(player.getUUID())) {
+            list = state.getContractsInvolving(player.getUUID());
+        } else {
+            list = state.getContracts();
+        }
 
         int index = IntegerArgumentType.getInteger(ctx, "index") - 1;
         if (index < 0 || index >= list.size()) {
@@ -260,36 +304,15 @@ public class DarkOneCommands {
             return 0;
         }
 
-        DarkOneState.Contract broken = list.get(index);
-
-        // Remove from real list by matching
-        List<DarkOneState.Contract> all = state.getContracts();
-        int realIndex = -1;
-        for (int i = 0; i < all.size(); i++) {
-            DarkOneState.Contract c = all.get(i);
-            if (c.partyA().equals(broken.partyA()) && c.partyB().equals(broken.partyB())
-                    && c.terms().equals(broken.terms()) && c.createdAtMs() == broken.createdAtMs()) {
-                realIndex = i;
-                break;
-            }
+        DarkOneState.Contract c = list.get(index);
+        ctx.getSource().sendSuccess(() -> Component.literal(
+                nameOf(server, c.partyA()) + " <-> " + nameOf(server, c.partyB())), false);
+        if (player != null) {
+            sendLongMessage(player, c.terms());
+        } else {
+            ctx.getSource().sendSuccess(() -> Component.literal(c.terms()), false);
         }
-        if (realIndex < 0 || !state.removeContract(realIndex)) {
-            ctx.getSource().sendFailure(Component.translatable("message.the-dark-one.contract_bad_index"));
-            return 0;
-        }
-
-        // Curse the breaker (unless they are the Dark One)
-        if (!state.isDarkOne(player.getUUID())) {
-            player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 20 * 60 * 5, 1)); // 5 min
-            player.addEffect(new MobEffectInstance(MobEffects.UNLUCK, 20 * 60 * 5, 0));
-            player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 20 * 30, 0)); // 30s
-        }
-
-        server.getPlayerList().broadcastSystemMessage(
-                Component.translatable("message.the-dark-one.contract_broken",
-                        player.getName(), broken.terms()),
-                false
-        );
+        ctx.getSource().sendSuccess(() -> Component.translatable("message.the-dark-one.contract_unbreakable"), false);
         return 1;
     }
 
