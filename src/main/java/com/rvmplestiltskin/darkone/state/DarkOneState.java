@@ -12,21 +12,20 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Persistent world data: current Dark One + contracts.
- * Survives restarts via SavedData in the overworld data folder.
- */
 public class DarkOneState extends SavedData {
 
     public static final Codec<ContractOffer> OFFER_CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
                     UUIDUtil.CODEC.fieldOf("offerer").forGetter(ContractOffer::offerer),
                     UUIDUtil.CODEC.fieldOf("target").forGetter(ContractOffer::target),
-                    Codec.STRING.fieldOf("terms").forGetter(ContractOffer::terms)
+                    Codec.STRING.fieldOf("terms").forGetter(ContractOffer::terms),
+                    Codec.STRING.optionalFieldOf("templateId", "").forGetter(ContractOffer::templateId)
             ).apply(instance, ContractOffer::new)
     );
 
@@ -35,7 +34,9 @@ public class DarkOneState extends SavedData {
                     UUIDUtil.CODEC.fieldOf("partyA").forGetter(Contract::partyA),
                     UUIDUtil.CODEC.fieldOf("partyB").forGetter(Contract::partyB),
                     Codec.STRING.fieldOf("terms").forGetter(Contract::terms),
-                    Codec.LONG.fieldOf("createdAt").forGetter(Contract::createdAtMs)
+                    Codec.LONG.fieldOf("createdAt").forGetter(Contract::createdAtMs),
+                    Codec.STRING.optionalFieldOf("templateId", "").forGetter(Contract::templateId),
+                    Codec.INT.optionalFieldOf("violations", 0).forGetter(Contract::violations)
             ).apply(instance, Contract::new)
     );
 
@@ -63,6 +64,9 @@ public class DarkOneState extends SavedData {
     private UUID darkOneUuid = null;
     private List<ContractOffer> pendingOffers = new ArrayList<>();
     private List<Contract> contracts = new ArrayList<>();
+
+    /** Cooldown to avoid spamming auto-punish (uuid -> last punish time ms) */
+    private final Map<UUID, Long> lastAutoPunish = new HashMap<>();
 
     public DarkOneState() {
         super();
@@ -103,29 +107,9 @@ public class DarkOneState extends SavedData {
         return null;
     }
 
-    public ContractOffer peekOfferFor(UUID target) {
-        for (ContractOffer o : pendingOffers) {
-            if (o.target.equals(target)) return o;
-        }
-        return null;
-    }
-
     public void addContract(Contract contract) {
         contracts.add(contract);
         setDirty();
-    }
-
-    public boolean removeContract(int index) {
-        if (index < 0 || index >= contracts.size()) return false;
-        contracts.remove(index);
-        setDirty();
-        return true;
-    }
-
-    public boolean removeContractsInvolving(UUID uuid) {
-        boolean removed = contracts.removeIf(c -> c.partyA.equals(uuid) || c.partyB.equals(uuid));
-        if (removed) setDirty();
-        return removed;
     }
 
     public List<Contract> getContracts() {
@@ -142,6 +126,25 @@ public class DarkOneState extends SavedData {
         return result;
     }
 
+    public void recordViolation(UUID offender) {
+        for (int i = 0; i < contracts.size(); i++) {
+            Contract c = contracts.get(i);
+            if (c.partyA.equals(offender) || c.partyB.equals(offender)) {
+                contracts.set(i, new Contract(c.partyA, c.partyB, c.terms, c.createdAtMs,
+                        c.templateId, c.violations + 1));
+            }
+        }
+        setDirty();
+    }
+
+    public boolean canAutoPunish(UUID uuid, long cooldownMs) {
+        long now = System.currentTimeMillis();
+        Long last = lastAutoPunish.get(uuid);
+        if (last != null && now - last < cooldownMs) return false;
+        lastAutoPunish.put(uuid, now);
+        return true;
+    }
+
     public static DarkOneState get(MinecraftServer server) {
         ServerLevel overworld = server.getLevel(Level.OVERWORLD);
         if (overworld == null) {
@@ -150,7 +153,16 @@ public class DarkOneState extends SavedData {
         return overworld.getDataStorage().computeIfAbsent(TYPE);
     }
 
-    public record ContractOffer(UUID offerer, UUID target, String terms) {}
+    public record ContractOffer(UUID offerer, UUID target, String terms, String templateId) {
+        public ContractOffer(UUID offerer, UUID target, String terms) {
+            this(offerer, target, terms, "");
+        }
+    }
 
-    public record Contract(UUID partyA, UUID partyB, String terms, long createdAtMs) {}
+    public record Contract(UUID partyA, UUID partyB, String terms, long createdAtMs,
+                           String templateId, int violations) {
+        public Contract(UUID partyA, UUID partyB, String terms, long createdAtMs) {
+            this(partyA, partyB, terms, createdAtMs, "", 0);
+        }
+    }
 }
