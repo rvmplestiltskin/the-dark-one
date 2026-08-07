@@ -11,18 +11,10 @@ base {
 }
 
 repositories {
-	// Add repositories to retrieve artifacts from in here.
 }
 
+// Keep client entrypoint in main sources for simplicity
 loom {
-	splitEnvironmentSourceSets()
-
-	mods {
-		"the-dark-one" {
-			sourceSet sourceSets.main
-			sourceSet sourceSets.client
-		}
-	}
 }
 
 dependencies {

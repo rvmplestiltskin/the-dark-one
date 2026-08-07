@@ -9,7 +9,6 @@
     "sources": "https://github.com/rvmplestiltskin/the-dark-one"
   },
   "license": "MIT",
-  "icon": "assets/the-dark-one/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [
