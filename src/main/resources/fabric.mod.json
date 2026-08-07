@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "the-dark-one",
+  "version": "${version}",
+  "name": "The Dark One",
+  "description": "Become Rumplestiltskin / The Dark One from Once Upon a Time. Only one player can hold the power at a time.",
+  "authors": ["rvmplestiltskin"],
+  "contact": {
+    "sources": "https://github.com/rvmplestiltskin/the-dark-one"
+  },
+  "license": "MIT",
+  "icon": "assets/the-dark-one/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.rvmplestiltskin.darkone.TheDarkOne"
+    ],
+    "client": [
+      "com.rvmplestiltskin.darkone.TheDarkOneClient"
+    ]
+  },
+  "mixins": [
+    "the-dark-one.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
