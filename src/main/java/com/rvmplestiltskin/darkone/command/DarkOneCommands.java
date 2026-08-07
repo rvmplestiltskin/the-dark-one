@@ -1,20 +1,19 @@
 package com.rvmplestiltskin.darkone.command;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.rvmplestiltskin.darkone.TheDarkOne;
 import com.rvmplestiltskin.darkone.item.ModItems;
 import com.rvmplestiltskin.darkone.state.DarkOneState;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.commands.arguments.item.ItemInput;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.UUID;
@@ -61,7 +60,6 @@ public class DarkOneCommands {
                                 return 1;
                             })
                     )
-                    // Create any item/potion while holding the dagger OR being the Dark One
                     .then(Commands.literal("create")
                             .then(Commands.argument("item", ItemArgument.item(registryAccess))
                                     .executes(ctx -> createItem(ctx, 1))
@@ -74,7 +72,7 @@ public class DarkOneCommands {
         });
     }
 
-    private static int createItem(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> ctx, int count) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+    private static int createItem(CommandContext<CommandSourceStack> ctx, int count) throws CommandSyntaxException {
         ServerPlayer player = ctx.getSource().getPlayer();
         if (player == null) {
             ctx.getSource().sendFailure(Component.literal("Only players can create items."));
@@ -87,20 +85,23 @@ public class DarkOneCommands {
         }
 
         ItemInput input = ItemArgument.getItem(ctx, "item");
-        ItemStack stack = input.createItemStack(count, false);
+        ItemStack stack = input.createItemStack(count);
 
         if (!player.getInventory().add(stack)) {
             player.drop(stack, false);
         }
 
+        final int finalCount = count;
         ctx.getSource().sendSuccess(() -> Component.translatable(
-                "message.the-dark-one.created", stack.getHoverName(), count), false);
+                "message.the-dark-one.created", stack.getHoverName(), finalCount), false);
         return 1;
     }
 
-    /** Dark One or anyone holding the dagger may create items. */
     private static boolean canUseCreate(ServerPlayer player) {
-        DarkOneState state = DarkOneState.get(player.getServer());
+        var server = player.level().getServer();
+        if (server == null) return false;
+
+        DarkOneState state = DarkOneState.get(server);
         if (state.isDarkOne(player.getUUID())) return true;
 
         ItemStack main = player.getMainHandItem();
