@@ -3,7 +3,6 @@ package com.rvmplestiltskin.darkone.item;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -35,9 +34,6 @@ public class DarkOnesDaggerItem extends Item {
 
     /** Cooldown in ticks (10 seconds) */
     public static final int PURGE_COOLDOWN = 20 * 10;
-
-    private static final Identifier COOLDOWN_ID =
-            Identifier.fromNamespaceAndPath("the-dark-one", "dagger_purge");
 
     public DarkOnesDaggerItem(Properties properties) {
         super(properties);
@@ -72,8 +68,8 @@ public class DarkOnesDaggerItem extends Item {
             return InteractionResult.SUCCESS;
         }
 
-        // 26.2: cooldown keyed by Identifier or ItemStack
-        if (player.getCooldowns().isOnCooldown(COOLDOWN_ID) || player.getCooldowns().isOnCooldown(stack)) {
+        // 26.2: ItemCooldowns works with ItemStack
+        if (player.getCooldowns().isOnCooldown(stack)) {
             return InteractionResult.FAIL;
         }
 
@@ -97,7 +93,7 @@ public class DarkOnesDaggerItem extends Item {
             killed++;
         }
 
-        player.getCooldowns().addCooldown(COOLDOWN_ID, PURGE_COOLDOWN);
+        player.getCooldowns().addCooldown(stack, PURGE_COOLDOWN);
 
         serverLevel.playSound(null, player.blockPosition(),
                 SoundEvents.WITHER_DEATH, SoundSource.PLAYERS, 0.6f, 1.5f);
