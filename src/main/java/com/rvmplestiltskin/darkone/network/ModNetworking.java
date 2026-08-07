@@ -14,7 +14,8 @@ import net.minecraft.world.phys.Vec3;
 public class ModNetworking {
 
     public static void register() {
-        PayloadTypeRegistry.playC2S().register(TeleportPayload.TYPE, TeleportPayload.STREAM_CODEC);
+        // 26.2 Fabric API: serverboundPlay = client -> server
+        PayloadTypeRegistry.serverboundPlay().register(TeleportPayload.TYPE, TeleportPayload.STREAM_CODEC);
 
         ServerPlayNetworking.registerGlobalReceiver(TeleportPayload.TYPE, (payload, context) -> {
             ServerPlayer player = context.player();

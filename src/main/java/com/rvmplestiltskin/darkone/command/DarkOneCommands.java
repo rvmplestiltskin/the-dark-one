@@ -15,7 +15,18 @@ public class DarkOneCommands {
     public static void register() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(Commands.literal("darkone")
-                    .requires(source -> source.hasPermission(2))
+                    // Permission level 2 = gamemaster / typical OP cheats level
+                    .requires(source -> {
+                        try {
+                            // Works on most 26.x builds
+                            return source.hasPermission(2);
+                        } catch (Throwable t) {
+                            // Fallback: only allow if source is a player who is OP
+                            ServerPlayer player = source.getPlayer();
+                            if (player == null) return source.getServer() != null;
+                            return source.getServer().getPlayerList().isOp(player.getGameProfile());
+                        }
+                    })
                     .then(Commands.literal("set")
                             .then(Commands.argument("player", EntityArgument.player())
                                     .executes(ctx -> {
