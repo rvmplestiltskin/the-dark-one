@@ -66,7 +66,7 @@ public class TheDarkOne implements ModInitializer {
             ServerPlayer controller = findDaggerHolderNear(server, darkOne, DAGGER_CONTROL_RANGE);
             if (controller != null && !controller.getUUID().equals(darkOne.getUUID())) {
                 darkOne.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 40, 2, true, false, true));
-                darkOne.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 1, true, false, true));
+                darkOne.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 40, 1, true, false, true));
                 // Subtle particle hint on the Dark One while controlled
                 if (darkOne.tickCount % 20 == 0) {
                     ServerLevel level = (ServerLevel) darkOne.level();
