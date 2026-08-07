@@ -2,6 +2,7 @@ package com.rvmplestiltskin.darkone;
 
 import com.rvmplestiltskin.darkone.command.DarkOneCommands;
 import com.rvmplestiltskin.darkone.item.ModItems;
+import com.rvmplestiltskin.darkone.network.ModNetworking;
 import com.rvmplestiltskin.darkone.state.DarkOneState;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
@@ -29,6 +30,7 @@ public class TheDarkOne implements ModInitializer {
 
         ModItems.register();
         DarkOneCommands.register();
+        ModNetworking.register();
 
         // Apply passive powers every tick to the current Dark One
         ServerTickEvents.END_SERVER_TICK.register(server -> {
@@ -69,7 +71,7 @@ public class TheDarkOne implements ModInitializer {
                 if (holdingDagger) {
                     // Transfer power
                     state.setDarkOne(killer.getUuid());
-                    // Give the dagger to the new Dark One (remove from old inventory if present)
+                    // Give the dagger to the new Dark One
                     giveDaggerTo(killer);
 
                     server.getPlayerManager().broadcast(
@@ -102,7 +104,6 @@ public class TheDarkOne implements ModInitializer {
     }
 
     public static void giveDaggerTo(ServerPlayerEntity player) {
-        // Remove any existing daggers from everyone first? (optional, keep it simple)
         ItemStack dagger = new ItemStack(ModItems.DARK_ONES_DAGGER);
 
         // Try to put in inventory, otherwise drop
