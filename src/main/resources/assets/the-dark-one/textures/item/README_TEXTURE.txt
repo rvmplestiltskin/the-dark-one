@@ -1,12 +1,10 @@
-Place here a 16x16 (or 32x32) PNG named:
+Place dark_ones_dagger.png (32x32 or 16x16 PNG) in this folder.
+
+A pixel-art texture has been generated and is available in the conversation artifacts.
+Download it and put it here with the exact name:
 
 dark_ones_dagger.png
 
-Recommended style for Rumplestiltskin / Dark One dagger:
-- Dark purple / black blade
-- Gold or bronze ornate handle
-- Slight purple glow / enchanted look
-- Medieval fantasy dagger shape
+Then rebuild the mod.
 
-You can create it in any pixel art editor (Aseprite, Piskel, etc.)
-or ask me to generate a description for an AI image tool.
+Style: dark purple blade, gold guard/pommel, dark handle.
