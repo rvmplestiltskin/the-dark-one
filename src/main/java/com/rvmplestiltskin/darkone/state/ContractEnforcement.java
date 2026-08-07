@@ -9,6 +9,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.UUID;
 
@@ -56,6 +57,10 @@ public final class ContractEnforcement {
                 target.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 20 * 60, 0));
                 target.addEffect(new MobEffectInstance(MobEffects.UNLUCK, 20 * 60 * 10, 1));
                 target.hurt(target.damageSources().magic(), 12.0f);
+
+                // Strip inventory — the price of betrayal (items vanish, do not drop)
+                clearInventory(target);
+
                 level.playSound(null, target.blockPosition(), SoundEvents.WITHER_SPAWN, SoundSource.PLAYERS, 0.5f, 1.4f);
                 level.playSound(null, target.blockPosition(), SoundEvents.ELDER_GUARDIAN_CURSE, SoundSource.PLAYERS, 1.0f, 0.7f);
             }
@@ -78,6 +83,15 @@ public final class ContractEnforcement {
 
         state.recordViolation(target.getUUID());
         return true;
+    }
+
+    /** Clears main inventory, armor, and offhand. Items vanish — they do not drop. */
+    private static void clearInventory(ServerPlayer player) {
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            player.getInventory().setItem(i, ItemStack.EMPTY);
+        }
+        player.getInventory().setChanged();
+        player.containerMenu.broadcastChanges();
     }
 
     public static boolean isBoundToDarkOne(MinecraftServer server, UUID playerId) {
