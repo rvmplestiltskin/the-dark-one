@@ -31,5 +31,10 @@
   "message.the-dark-one.contract_bad_index": "Invalid contract number.",
   "message.the-dark-one.templates_header": "Contract templates (always favor the Dark One):",
   "message.the-dark-one.templates_usage": "Usage: /darkone contract offer <player> template <id>",
-  "message.the-dark-one.template_unknown": "Unknown template: %s. Available: %s"
+  "message.the-dark-one.template_unknown": "Unknown template: %s. Available: %s",
+  "message.the-dark-one.punish_only_darkone": "Only the Dark One can punish.",
+  "message.the-dark-one.punish_not_bound": "That player has no contract with you.",
+  "message.the-dark-one.punish_done": "Punishment applied to %s.",
+  "message.the-dark-one.punish_self": "The contract claims you: %s",
+  "message.the-dark-one.punish_notify": "%s was punished by the contract (%s)."
 }

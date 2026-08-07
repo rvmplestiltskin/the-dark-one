@@ -10,50 +10,38 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 
+import java.util.UUID;
+
 /**
- * Applies magical punishments for contract violations — manual or automatic.
- * Style: binding deals that hurt when you turn against the Dark One.
+ * Magical punishments for contract violations — manual or automatic.
  */
 public final class ContractEnforcement {
 
     private ContractEnforcement() {}
 
     public enum Severity {
-        WARNING,   // light slap
-        STANDARD,  // normal curse
-        SEVERE     // betrayal / attack on Dark One
+        WARNING,
+        STANDARD,
+        SEVERE
     }
 
-    /**
-     * Punish a player who is bound by a contract with the Dark One.
-     * @return true if punishment was applied
-     */
     public static boolean punish(MinecraftServer server, ServerPlayer target, Severity severity, String reason) {
         DarkOneState state = DarkOneState.get(server);
         if (state.getDarkOneUuid() == null) return false;
 
-        // Only punish the non-Dark-One party of a contract with the Dark One
-        boolean bound = false;
-        for (DarkOneState.Contract c : state.getContractsInvolving(target.getUUID())) {
-            if (c.partyA().equals(state.getDarkOneUuid()) || c.partyB().equals(state.getDarkOneUuid())) {
-                if (!state.isDarkOne(target.getUUID())) {
-                    bound = true;
-                    break;
-                }
-            }
-        }
+        boolean bound = isBoundToDarkOne(server, target.getUUID());
         if (!bound) return false;
 
         ServerLevel level = (ServerLevel) target.level();
 
         switch (severity) {
             case WARNING -> {
-                target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 20 * 30, 0)); // 30s
-                target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20 * 15, 0));
+                target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 20 * 30, 0));
+                target.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 20 * 15, 0));
                 level.playSound(null, target.blockPosition(), SoundEvents.ILLUSIONER_CAST_SPELL, SoundSource.PLAYERS, 0.8f, 0.6f);
             }
             case STANDARD -> {
-                target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 20 * 60 * 3, 1)); // 3 min
+                target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 20 * 60 * 3, 1));
                 target.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 20 * 60 * 2, 1));
                 target.addEffect(new MobEffectInstance(MobEffects.UNLUCK, 20 * 60 * 5, 0));
                 target.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 20 * 20, 0));
@@ -61,7 +49,7 @@ public final class ContractEnforcement {
                 level.playSound(null, target.blockPosition(), SoundEvents.WITHER_HURT, SoundSource.PLAYERS, 0.7f, 0.5f);
             }
             case SEVERE -> {
-                target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 20 * 60 * 10, 2)); // 10 min
+                target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 20 * 60 * 10, 2));
                 target.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 20 * 60 * 5, 2));
                 target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 20 * 30, 0));
                 target.addEffect(new MobEffectInstance(MobEffects.WITHER, 20 * 15, 1));
@@ -92,7 +80,6 @@ public final class ContractEnforcement {
         return true;
     }
 
-    /** True if this player is the non-Dark-One party of any contract with the Dark One. */
     public static boolean isBoundToDarkOne(MinecraftServer server, UUID playerId) {
         DarkOneState state = DarkOneState.get(server);
         UUID dark = state.getDarkOneUuid();

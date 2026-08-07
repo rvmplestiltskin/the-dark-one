@@ -31,5 +31,10 @@
   "message.the-dark-one.contract_bad_index": "Número de contrato inválido.",
   "message.the-dark-one.templates_header": "Plantillas de contrato (siempre favorecen al Oscuro):",
   "message.the-dark-one.templates_usage": "Uso: /darkone contract offer <jugador> template <id>",
-  "message.the-dark-one.template_unknown": "Plantilla desconocida: %s. Disponibles: %s"
+  "message.the-dark-one.template_unknown": "Plantilla desconocida: %s. Disponibles: %s",
+  "message.the-dark-one.punish_only_darkone": "Solo el Oscuro puede castigar.",
+  "message.the-dark-one.punish_not_bound": "Ese jugador no tiene contrato contigo.",
+  "message.the-dark-one.punish_done": "Castigo aplicado a %s.",
+  "message.the-dark-one.punish_self": "El contrato te reclama: %s",
+  "message.the-dark-one.punish_notify": "%s ha sido castigado por el contrato (%s)."
 }
