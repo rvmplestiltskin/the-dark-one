@@ -15,14 +15,25 @@ public class DarkOneCommands {
     public static void register() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(Commands.literal("darkone")
-                    // Restrict to operators via player list check (26.2-safe)
+                    // Console always allowed; in-game players need to be operators.
+                    // 26.2 PlayerList.isOp takes NameAndId, not GameProfile.
                     .requires(source -> {
                         ServerPlayer player = source.getPlayer();
                         if (player == null) {
-                            // Console / command blocks
-                            return true;
+                            return true; // dedicated server console / command block
                         }
-                        return source.getServer().getPlayerList().isOp(player.getGameProfile());
+                        try {
+                            // Prefer NameAndId API when present
+                            var nameAndId = player.nameAndId();
+                            return source.getServer().getPlayerList().isOp(nameAndId);
+                        } catch (Throwable ignored) {
+                            // Fallback: allow if singleplayer owner, otherwise require cheats context
+                            try {
+                                return source.getServer().isSingleplayerOwner(player.getGameProfile());
+                            } catch (Throwable ignored2) {
+                                return source.getServer().getPlayerList().isOp(player.getGameProfile());
+                            }
+                        }
                     })
                     .then(Commands.literal("set")
                             .then(Commands.argument("player", EntityArgument.player())
