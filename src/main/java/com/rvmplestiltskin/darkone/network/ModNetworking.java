@@ -4,49 +4,46 @@ import com.rvmplestiltskin.darkone.TheDarkOne;
 import com.rvmplestiltskin.darkone.state.DarkOneState;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.phys.Vec3;
 
 public class ModNetworking {
 
     public static void register() {
-        PayloadTypeRegistry.playC2S().register(TeleportPayload.ID, TeleportPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(TeleportPayload.TYPE, TeleportPayload.STREAM_CODEC);
 
-        ServerPlayNetworking.registerGlobalReceiver(TeleportPayload.ID, (payload, context) -> {
-            ServerPlayerEntity player = context.player();
+        ServerPlayNetworking.registerGlobalReceiver(TeleportPayload.TYPE, (payload, context) -> {
+            ServerPlayer player = context.player();
             context.server().execute(() -> {
                 DarkOneState state = DarkOneState.get(context.server());
-                if (!state.isDarkOne(player.getUuid())) {
-                    return; // Only the Dark One can teleport this way
+                if (!state.isDarkOne(player.getUUID())) {
+                    return;
                 }
 
-                // Simple forward teleport (8 blocks)
-                Vec3d look = player.getRotationVec(1.0f);
-                Vec3d target = player.getPos().add(look.multiply(8.0));
+                Vec3 look = player.getLookAngle();
+                Vec3 target = player.position().add(look.scale(8.0));
 
-                ServerWorld world = player.getServerWorld();
+                ServerLevel level = player.serverLevel();
 
-                // Particles at origin
-                world.spawnParticles(ParticleTypes.PORTAL,
+                level.sendParticles(ParticleTypes.PORTAL,
                         player.getX(), player.getY() + 1, player.getZ(),
                         30, 0.5, 1.0, 0.5, 0.1);
 
-                player.requestTeleport(target.x, target.y, target.z);
+                player.teleportTo(target.x, target.y, target.z);
                 player.fallDistance = 0;
 
-                // Particles at destination + sound
-                world.spawnParticles(ParticleTypes.PORTAL,
+                level.sendParticles(ParticleTypes.PORTAL,
                         target.x, target.y + 1, target.z,
                         40, 0.5, 1.0, 0.5, 0.15);
 
-                world.playSound(null, BlockPos.ofFloored(target),
-                        SoundEvents.ENTITY_ENDERMAN_TELEPORT,
-                        SoundCategory.PLAYERS, 1.0f, 0.7f);
+                level.playSound(null, BlockPos.containing(target),
+                        SoundEvents.ENDERMAN_TELEPORT,
+                        SoundSource.PLAYERS, 1.0f, 0.7f);
             });
         });
     }

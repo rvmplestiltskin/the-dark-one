@@ -1,29 +1,28 @@
 package com.rvmplestiltskin.darkone.item;
 
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.SwordItem;
-import net.minecraft.item.ToolMaterial;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 
 import java.util.List;
+import java.util.function.Consumer;
 
-public class DarkOnesDaggerItem extends SwordItem {
+public class DarkOnesDaggerItem extends Item {
 
-    public DarkOnesDaggerItem(ToolMaterial material, Settings settings) {
-        super(material, settings);
+    public DarkOnesDaggerItem(Properties properties) {
+        super(properties);
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
-        tooltip.add(Text.translatable("item.the-dark-one.dark_ones_dagger.tooltip").formatted(Formatting.DARK_PURPLE));
-        super.appendTooltip(stack, context, tooltip, type);
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        tooltip.add(Component.translatable("item.the-dark-one.dark_ones_dagger.tooltip").withStyle(ChatFormatting.DARK_PURPLE));
+        super.appendHoverText(stack, context, tooltip, flag);
     }
 
     @Override
-    public boolean hasGlint(ItemStack stack) {
-        return true; // Always enchanted look
+    public boolean isFoil(ItemStack stack) {
+        return true;
     }
 }

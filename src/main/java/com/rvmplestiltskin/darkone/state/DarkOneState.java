@@ -1,15 +1,18 @@
 package com.rvmplestiltskin.darkone.state;
 
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.PersistentState;
-import net.minecraft.world.PersistentStateManager;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.storage.DimensionDataStorage;
 
 import java.util.UUID;
 
-public class DarkOneState extends PersistentState {
+public class DarkOneState extends SavedData {
+
+    private static final String DATA_NAME = "the_dark_one";
 
     private UUID darkOneUuid = null;
 
@@ -23,38 +26,41 @@ public class DarkOneState extends PersistentState {
 
     public void setDarkOne(UUID uuid) {
         this.darkOneUuid = uuid;
-        markDirty();
+        setDirty();
     }
 
     public void clearDarkOne() {
         this.darkOneUuid = null;
-        markDirty();
+        setDirty();
     }
 
-    @Override
-    public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         if (darkOneUuid != null) {
-            nbt.putUuid("DarkOne", darkOneUuid);
+            tag.putUUID("DarkOne", darkOneUuid);
         }
-        return nbt;
+        return tag;
     }
 
-    public static DarkOneState createFromNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
+    public static DarkOneState load(CompoundTag tag, HolderLookup.Provider registries) {
         DarkOneState state = new DarkOneState();
-        if (nbt.containsUuid("DarkOne")) {
-            state.darkOneUuid = nbt.getUuid("DarkOne");
+        if (tag.hasUUID("DarkOne")) {
+            state.darkOneUuid = tag.getUUID("DarkOne");
         }
         return state;
     }
 
-    private static final Type<DarkOneState> TYPE = new Type<>(
+    private static final SavedData.Factory<DarkOneState> FACTORY = new SavedData.Factory<>(
             DarkOneState::new,
-            DarkOneState::createFromNbt,
+            DarkOneState::load,
             null
     );
 
     public static DarkOneState get(MinecraftServer server) {
-        PersistentStateManager manager = server.getWorld(World.OVERWORLD).getPersistentStateManager();
-        return manager.getOrCreate(TYPE, "the_dark_one");
+        ServerLevel overworld = server.getLevel(Level.OVERWORLD);
+        if (overworld == null) {
+            throw new IllegalStateException("Overworld not loaded");
+        }
+        DimensionDataStorage storage = overworld.getDataStorage();
+        return storage.computeIfAbsent(FACTORY, DATA_NAME);
     }
 }
