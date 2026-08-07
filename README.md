@@ -1,43 +1,32 @@
 # The Dark One
 
-A Fabric mod that allows **one player** to become The Dark One.
+Fabric mod for **Minecraft 26.2**.
 
-Only one Dark One can exist at a time. The power can be claimed by an operator or transferred by killing the current Dark One while holding the unique dagger.
+Only one player can be The Dark One at a time. The power is given by command or transferred by killing the current Dark One while holding the unique dagger.
 
 ## Features
 
-### Being the Dark One grants:
-- Increased Strength
-- Increased Speed
-- Strong Regeneration
-- Damage Resistance
-- Permanent Night Vision
-- Fire Resistance
-- Water Breathing
+- Passive powers while Dark One: Strength, Speed, Regeneration, Resistance, Night Vision, Fire Resistance, Water Breathing
+- Teleport ability (default key `V`)
+- Unique dagger (only one in the world)
+- `/darkone set <player>` / `clear` / `who` (OP level 2)
 
-### Active Ability
-- Short-range teleport (default key: `V`) with dark particles. Only usable by the current Dark One.
+## Build (GitHub Actions)
 
-### The Dark One's Dagger
-- There is **only one** dagger in the entire world.
-- The dagger is never duplicated by commands.
-- When an operator sets a new Dark One, the existing dagger (if any) is moved to that player.
-- Killing the current Dark One while holding the dagger transfers both the power and the dagger to the killer.
+Every push runs a build for 26.2. Download the JAR from the Actions tab → Artifacts.
 
-### Commands (requires permission level 2)
-```
-/darkone set <player>   - Makes the player the Dark One and moves the dagger to them
-/darkone clear          - Removes the Dark One status
-/darkone who            - Shows who the current Dark One is
+## Local build
+
+Requires **Java 25**.
+
+```bash
+./gradlew build
 ```
 
-## Installation
+Output: `build/libs/the-dark-one-1.1.0.jar`
 
-1. Install Fabric Loader for Minecraft 26.2
-2. Install Fabric API for 26.2
-3. Place this mod in the `mods` folder
+## Important (26.2)
 
-## Notes
-
-- Primary target: **Minecraft 26.2**
-- The mod is intentionally generic and original. No external franchise content is included.
+Minecraft 26.1+ is unobfuscated. This project uses the official Fabric Loom 1.17 template.
+The current Java sources still need a full pass to official Mojang names before the first successful compile.
+Once that port is done, GitHub Actions will produce a working JAR automatically.
