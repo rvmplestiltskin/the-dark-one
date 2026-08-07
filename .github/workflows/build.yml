@@ -1,0 +1,31 @@
+name: build
+on: [pull_request, push]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v6
+      - name: validate gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+      - name: setup jdk
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'microsoft'
+      - name: make gradle wrapper executable
+        run: chmod +x ./gradlew || true
+      - name: build
+        run: |
+          if [ -f ./gradlew ]; then
+            ./gradlew build --stacktrace
+          else
+            gradle build --stacktrace
+          fi
+      - name: capture build artifacts
+        if: success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: the-dark-one-26.2
+          path: build/libs/

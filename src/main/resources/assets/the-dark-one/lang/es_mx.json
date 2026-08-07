@@ -1,0 +1,11 @@
+{
+  "item.the-dark-one.dark_ones_dagger": "La Daga del Oscuro",
+  "item.the-dark-one.dark_ones_dagger.tooltip": "Solo existe una. Quien la empuñe puede tomar el poder.",
+  "key.the-dark-one.teleport": "Teletransporte Oscuro",
+  "category.the-dark-one": "El Oscuro",
+  "message.the-dark-one.became": "%s ahora es El Oscuro",
+  "message.the-dark-one.cleared": "El poder del Oscuro ha sido removido",
+  "message.the-dark-one.current": "El Oscuro actual es: %s",
+  "message.the-dark-one.none": "Actualmente no hay Oscuro",
+  "message.the-dark-one.transferred": "¡%s ha tomado el poder del Oscuro!"
+}
