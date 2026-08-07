@@ -9,13 +9,13 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public class ModNetworking {
 
     public static final double TELEPORT_DISTANCE = 32.0;
-    public static final double STEP = 0.25;
+    public static final double STEP = 0.5;
 
     public static void register() {
         PayloadTypeRegistry.serverboundPlay().register(TeleportPayload.TYPE, TeleportPayload.STREAM_CODEC);
@@ -31,20 +31,23 @@ public class ModNetworking {
                 ServerLevel level = (ServerLevel) player.level();
                 Vec3 start = player.position();
                 Vec3 look = player.getLookAngle().normalize();
+                AABB box = player.getBoundingBox();
 
-                // Raycast: walk forward until blocked, land just before the obstacle
+                // Advance along look direction while the full player hitbox fits
                 Vec3 safe = start;
                 int steps = (int) (TELEPORT_DISTANCE / STEP);
                 for (int i = 1; i <= steps; i++) {
-                    Vec3 candidate = start.add(look.scale(i * STEP));
-                    if (!isSafeTeleportSpot(level, candidate, player.getBbHeight())) {
+                    Vec3 delta = look.scale(i * STEP);
+                    AABB moved = box.move(delta);
+                    // noCollision = space is free of solid blocks for this entity
+                    if (!level.noCollision(player, moved)) {
                         break;
                     }
-                    safe = candidate;
+                    safe = start.add(delta);
                 }
 
-                // Don't teleport if we barely moved
-                if (safe.distanceToSqr(start) < 0.5) {
+                // Need at least ~1 block of travel
+                if (safe.distanceToSqr(start) < 1.0) {
                     return;
                 }
 
@@ -64,23 +67,5 @@ public class ModNetworking {
                         SoundSource.PLAYERS, 1.0f, 0.6f);
             });
         });
-    }
-
-    /** Feet and head must not be inside solid blocks; allow air/water/passable. */
-    private static boolean isSafeTeleportSpot(ServerLevel level, Vec3 pos, float height) {
-        BlockPos feet = BlockPos.containing(pos.x, pos.y, pos.z);
-        BlockPos head = BlockPos.containing(pos.x, pos.y + height - 0.1, pos.z);
-
-        BlockState feetState = level.getBlockState(feet);
-        BlockState headState = level.getBlockState(head);
-
-        // Reject solid collision at feet or head
-        if (!feetState.getCollisionShape(level, feet).isEmpty()) {
-            return false;
-        }
-        if (!headState.getCollisionShape(level, head).isEmpty()) {
-            return false;
-        }
-        return true;
     }
 }
