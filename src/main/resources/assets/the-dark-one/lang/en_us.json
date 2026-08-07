@@ -13,5 +13,15 @@
   "message.the-dark-one.transferred": "%s has taken the power of the Dark One!",
   "message.the-dark-one.transferred_dramatic": "The darkness shifts... %s has claimed the power from %s. The dagger has chosen.",
   "message.the-dark-one.create_denied": "You must be the Dark One or hold the dagger to create items.",
-  "message.the-dark-one.created": "Created %s x%d"
+  "message.the-dark-one.created": "Created %s x%d",
+  "message.the-dark-one.contract_only_darkone": "Only the Dark One can offer contracts.",
+  "message.the-dark-one.contract_offered": "You offered a contract to %s: %s",
+  "message.the-dark-one.contract_received": "%s offers you a contract: %s",
+  "message.the-dark-one.contract_accept_hint": "Use /darkone contract accept to seal it.",
+  "message.the-dark-one.contract_none": "You have no pending contract offer.",
+  "message.the-dark-one.contract_accepted": "Contract accepted: %s",
+  "message.the-dark-one.contract_accepted_by": "%s accepted your contract: %s",
+  "message.the-dark-one.contract_sealed": "A contract has been sealed between %s and %s.",
+  "message.the-dark-one.contract_list_empty": "No contracts on record.",
+  "message.the-dark-one.contract_list_header": "Active contracts:"
 }

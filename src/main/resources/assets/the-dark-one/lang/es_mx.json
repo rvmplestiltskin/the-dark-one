@@ -13,5 +13,15 @@
   "message.the-dark-one.transferred": "¡%s ha tomado el poder del Oscuro!",
   "message.the-dark-one.transferred_dramatic": "La oscuridad cambia... %s ha tomado el poder de %s. La daga ha elegido.",
   "message.the-dark-one.create_denied": "Debes ser el Oscuro o sostener la daga para crear objetos.",
-  "message.the-dark-one.created": "Creado %s x%d"
+  "message.the-dark-one.created": "Creado %s x%d",
+  "message.the-dark-one.contract_only_darkone": "Solo el Oscuro puede ofrecer contratos.",
+  "message.the-dark-one.contract_offered": "Ofreciste un contrato a %s: %s",
+  "message.the-dark-one.contract_received": "%s te ofrece un contrato: %s",
+  "message.the-dark-one.contract_accept_hint": "Usa /darkone contract accept para sellarlo.",
+  "message.the-dark-one.contract_none": "No tienes ninguna oferta de contrato pendiente.",
+  "message.the-dark-one.contract_accepted": "Contrato aceptado: %s",
+  "message.the-dark-one.contract_accepted_by": "%s aceptó tu contrato: %s",
+  "message.the-dark-one.contract_sealed": "Un contrato ha sido sellado entre %s y %s.",
+  "message.the-dark-one.contract_list_empty": "No hay contratos registrados.",
+  "message.the-dark-one.contract_list_header": "Contratos activos:"
 }
