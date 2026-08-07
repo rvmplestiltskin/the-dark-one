@@ -2,31 +2,27 @@
 
 Fabric mod for **Minecraft 26.2**.
 
-Only one player can be The Dark One at a time. The power is given by command or transferred by killing the current Dark One while holding the unique dagger.
+Only one player can hold the power of the Dark One at a time. Power transfers by command or by killing the current holder with the unique dagger.
 
 ## Features
 
-- Passive powers while Dark One: Strength, Speed, Regeneration, Resistance, Night Vision, Fire Resistance, Water Breathing
-- Teleport ability (default key `V`)
-- Unique dagger (only one in the world)
-- `/darkone set <player>` / `clear` / `who` (OP level 2)
+- Single Dark One (persistent for the server session)
+- Passive buffs: strength, speed, regen, resistance, night vision, fire/water resistance, absorption
+- Immortality except to the dagger
+- Unique indestructible dagger (instakill, controls nearby Dark One)
+- Teleport (key V) — 32 blocks in look direction
+- `/darkone create <item> [count]` — create any item while Dark One or holding the dagger
+- Dramatic transfer effects when the dagger claims a new Dark One
 
-## Build (GitHub Actions)
+## Commands
 
-Every push runs a build for 26.2. Download the JAR from the Actions tab → Artifacts.
-
-## Local build
-
-Requires **Java 25**.
-
-```bash
-./gradlew build
+```
+/darkone set <player>
+/darkone clear
+/darkone who
+/darkone create <item> [count]
 ```
 
-Output: `build/libs/the-dark-one-1.1.0.jar`
+## License
 
-## Important (26.2)
-
-Minecraft 26.1+ is unobfuscated. This project uses the official Fabric Loom 1.17 template.
-The current Java sources still need a full pass to official Mojang names before the first successful compile.
-Once that port is done, GitHub Actions will produce a working JAR automatically.
+[BSD 3-Clause](LICENSE)

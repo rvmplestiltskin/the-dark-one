@@ -8,7 +8,7 @@
   "contact": {
     "sources": "https://github.com/rvmplestiltskin/the-dark-one"
   },
-  "license": "MIT",
+  "license": "BSD-3-Clause",
   "environment": "*",
   "entrypoints": {
     "main": [
